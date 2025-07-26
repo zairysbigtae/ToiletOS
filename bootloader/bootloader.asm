@@ -35,59 +35,6 @@ disk_error:
     mov si, disk_read_error_msg
     call print_string
 
-print_hex:
-    mov ah, 0x0e ; shift out
-
-
-print_string:
-    mov ah, 0x0e ; shift out
-
-.print_next_char:
-    lodsb
-    or al, al
-    jz hang ; if theres '\0'? hang
-
-    cmp al, 92 ; check if its '\'
-    je is_control_char
-
-    ; mov ah, 0x0e ; shift out
-    int 0x10 
-
-    jmp .print_next_char ; loop, to print next char
-
-is_control_char:
-    lodsb ; next char after '\'
-    cmp al, 110 ; check if its 'n'
-    je newline
-
-    cmp al, 114 ; check if its 'r'
-    je carriage_return
-
-    ret
-
-carriage_return:
-    ; carriage return 
-    mov ah, 0x0e ; shift out
-    mov al, 13 ; cr
-    int 0x10
-
-    ret
-
-newline:
-    ; carriage return 
-    ; cuz if you comment this code out, youd see a big ass space in the bootloader screen
-    call carriage_return
-
-    ; line feed
-    mov ah, 0x0e ; shift out
-    mov al, 10 ; line feed / newline
-    int 0x10
-
-    jmp print_string.print_next_char
-
-hang:
-    jmp $
-
 get_key:
     call .input_loop
 
@@ -105,11 +52,9 @@ get_key:
     jmp .input_loop
 
 .input_finished:
-    ; == output part == 
-
-    ; pushing ax and load it,  cuz we need to modify it a bit for newline
+    ; == output part == pushing ax and load it,  cuz we need to modify it a bit for newline
     push ax ; save ax
-    call newline
+    call print_string.newline
 
     pop ax ; load ax
 
@@ -117,6 +62,9 @@ get_key:
 
 message db "HELLO WORLD!\npurrs on sara\n", 0 ; 0 = null termination, 10 = newline
 disk_read_error_msg db "Disk read error!\n", 0
+
+include "libs/print.inc"
+
 msg db "ligma\n", 0
 times 510 - ($ - $$) db 0
 dw 0xAA55
