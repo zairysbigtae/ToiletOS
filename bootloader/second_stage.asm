@@ -13,7 +13,7 @@ _start:
     mov al, '!'
     call print_char
 
-    mov ax, 0x1000      ; match segment used in bootloader.asm when jumping to 0x1000:0x0000
+    mov ax, cs      ; match segment used in bootloader.asm when jumping to 0x1000:0x0000
     mov ds, ax          ; DS:SI is now correct, since DS = 0x1000
 
     mov si, message
