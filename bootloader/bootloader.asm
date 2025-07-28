@@ -1,7 +1,11 @@
 use16
 org 0x7C00 ; BIOS loads us here
+jmp _start
+
+include "libs/print.inc"
 
 _start:
+    cli
     xor ax, ax
     mov ds, ax
     mov es, ax
@@ -19,21 +23,38 @@ _start:
     mov es, ax      ; Segment -> 0x1000:0000 = 0x10000 physical address
     pop ax ; load ax back
 
-    int 0x13 ; disk interrupt
-    jc disk_error ; if there carry set'd, then error
+    ; just to be safe
+    ; clear carry flag
+    ; clc
+
+    int 0x13 ; disk interrupt, reads into ES:BX
+    jc .disk_error ; if there carry set'd, then error
 
     ; intro LOL
     mov si, message
     call print_string
 
+    mov si, boot_msg
+    call print_string
     ; jump to the loaded second-stage bootloader
     jmp 0x1000:0000
 
+    ; how to get physical address
+    ; physical address = (segment * 0x10) + offset
+    ; mov ax, 0x800
+    ; mov es, ax
+    ; mov bx, 0x0000
+    ; load sector into ES:BX
+
+    mov si, jmp_boot_msg
+    call print_string
+
     ; call get_key
 
-disk_error:
+.disk_error:
     mov si, disk_read_error_msg
     call print_string
+    hlt
 
 get_key:
     call .input_loop
@@ -60,11 +81,12 @@ get_key:
 
     int 0x10
 
+
 message db "HELLO WORLD!\npurrs on sara\n", 0 ; 0 = null termination, 10 = newline
 disk_read_error_msg db "Disk read error!\n", 0
 
-include "libs/print.inc"
+boot_msg db "Stage 1 loaded. Loading stage 2...\n", 0
+jmp_boot_msg db "Jumped to the location\n", 0
 
-msg db "ligma\n", 0
 times 510 - ($ - $$) db 0
-dw 0xAA55
+dw 0xAA55 ; boot signature

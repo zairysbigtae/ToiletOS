@@ -25,6 +25,7 @@ print_string:
     cmp al, 114 ; check if its 'r'
     je .carriage_return
 
+    int 0x10
     jmp .print_next_char
 
 .carriage_return:
@@ -33,19 +34,25 @@ print_string:
     mov al, 13 ; cr
     int 0x10
 
-    ret
+    jmp .print_next_char
 
 .newline:
     ; carriage return
     ; cuz if you comment this code out, youd see a big ass space in the bootloader screen
-    call .carriage_return
+    mov al, 13 ; '\r'
+    int 0x10
+    mov al, 10 ; '\n'
+    int 0x10
+    jmp .print_next_char
 
-    ; line feed
-    mov ah, 0x0e ; shift out
-    mov al, 10 ; line feed / newline
+.done:
+    ret
+
+print_char:
+    mov ah, 0x0e
     int 0x10
 
-    jmp .print_next_char
+    jmp .done
 
 .done:
     ret
